@@ -13,6 +13,8 @@ public class ScenarioCharacterAssetGenerator : ScriptableObject
 
     public int BlockSize = 4;
 
+    public bool UseTightMesh = true;
+
     public RectInt DiffRect;
     public RectInt DiffRectAdjustedByBlockSize;
 

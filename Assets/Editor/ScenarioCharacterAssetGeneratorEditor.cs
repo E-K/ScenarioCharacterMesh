@@ -9,6 +9,11 @@ using System.Linq;
 [CustomEditor(typeof(ScenarioCharacterAssetGenerator))]
 public class ScenarioCharacterAssetGeneratorEditor : Editor
 {
+    const string TightL = "_Tight-L";
+    const string TightR = "_Tight-R";
+    const string TightB = "_Tight-B";
+    const string TightT = "_Tight-T";
+
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
@@ -167,83 +172,9 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
                 }
             }
 
-            //矩形コピーユーティリティ
-            void CopyPixels(Texture2D src, Texture2D dst, RectInt srcRect, RectInt dstRect)
-            {
-                for(int y = 0; y < srcRect.height; y++)
-                {
-                    var sy = srcRect.y + y;
-                    var dy = dstRect.y + y;
-
-                    for(int x = 0; x < srcRect.width; x++)
-                    {
-                        var sx = srcRect.x + x;
-                        var dx = dstRect.x + x;
-
-                        dst.SetPixel(dx, dy, src.GetPixel(sx, sy));
-                    }
-                }
-            };
-
-            //Extrude関数...未使用なんやで
-            void DoExtrude(Texture2D texture, RectInt spriteRect, int extrude)
-            {
-                //Debug.Log(spriteRect);
-                //Debug.Log($"xMax:{spriteRect.xMax}, yMax:{spriteRect.yMax}");
-
-                //下辺のExtrude
-                for (int y = spriteRect.y - 1; y >= spriteRect.y - extrude; y--)
-                {
-                    if (y < 0) break;
-
-                    for (int x = spriteRect.x; x < spriteRect.xMax; x++)
-                    {
-                        var color = texture.GetPixel(x, spriteRect.y);
-                        texture.SetPixel(x, y, color);
-                    }
-                }
-
-                //上辺のExtrude
-                for (int y = spriteRect.yMax; y < spriteRect.yMax + extrude; y++)
-                {
-                    if (y >= texture.height) break;
-
-                    for (int x = spriteRect.x; x < spriteRect.xMax; x++)
-                    {
-                        var color = texture.GetPixel(x, spriteRect.yMax - 1);
-                        texture.SetPixel(x, y, color);
-                    }
-                }
-
-                //左片のExtrude
-                for (int x = spriteRect.x - 1; x >= spriteRect.x - extrude; x--)
-                {
-                    if (x < 0) break;
-
-                    for (int y = spriteRect.y; y < spriteRect.yMax; y++)
-                    {
-                        var color = texture.GetPixel(spriteRect.x, y);
-                        texture.SetPixel(x, y, color);
-                    }
-                }
-
-                //右片のExtrude
-                for (int x = spriteRect.xMax; x < spriteRect.xMax + extrude; x++)
-                {
-                    if (x >= texture.width) break;
-
-                    for (int y = spriteRect.y; y < spriteRect.yMax; y++)
-                    {
-                        var color = texture.GetPixel(spriteRect.xMax - 1, y);
-                        texture.SetPixel(x, y, color);
-                    }
-                }
-            };
-
             //まずはベース画像をコピー
             var baseRect = new RectInt(0, 0, baseWidth, baseHeight);
-            CopyPixels(source.BaseTexture, packedTexture, baseRect, baseRect);
-            //DoExtrude(packedTexture, baseRect, source.Extrude);
+            Texture2DUtility.CopyPixels(source.BaseTexture, packedTexture, baseRect, baseRect);
 
             //次に差分画像をコピー
             var rects = new RectInt[source.DiffTextures.Length];
@@ -257,8 +188,7 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
                 rects[i] = rect;
 
                 var rectWithRoundBlock = withRoundBlock(rect, source.BlockSize);
-                CopyPixels(source.DiffTextures[i], packedTexture, diffRectWithRoundBlock, rectWithRoundBlock);
-                //DoExtrude(packedTexture, rect, source.Extrude);
+                Texture2DUtility.CopyPixels(source.DiffTextures[i], packedTexture, diffRectWithRoundBlock, rectWithRoundBlock);
             }
 
             var bytes = packedTexture.EncodeToPNG();
@@ -272,7 +202,7 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
             t.spriteImportMode = SpriteImportMode.Multiple;
             var setting = new TextureImporterSettings();
             t.ReadTextureSettings(setting);
-            setting.spriteMeshType = SpriteMeshType.FullRect;
+            setting.spriteMeshType = source.UseTightMesh ? SpriteMeshType.Tight : SpriteMeshType.FullRect;
             setting.spriteGenerateFallbackPhysicsShape = false;
             t.SetTextureSettings(setting);
 
@@ -292,13 +222,24 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
                 };
             };
 
-            var sprites = new SpriteMetaData[source.DiffTextures.Length + 2];
+            var sprites = new SpriteMetaData[source.DiffTextures.Length + (source.UseTightMesh ? 6 : 2)];
             sprites[0] = createSpriteMeshData(source.BaseTexture.name, baseRect);
             sprites[1] = createSpriteMeshData(source.DiffRectSpriteName, diffRect);
             for(int i = 0; i < source.DiffTextures.Length; i++)
             {
                 sprites[i + 2] = createSpriteMeshData(source.DiffTextures[i].name, rects[i]);
             }
+
+            if(source.UseTightMesh)
+            {
+                var offset = source.DiffTextures.Length + 2;
+                //左側
+                sprites[offset + 0] = createSpriteMeshData(TightL, new RectInt(baseRect.x, baseRect.y, diffRect.x - baseRect.x, baseRect.height));
+                sprites[offset + 1] = createSpriteMeshData(TightR, new RectInt(diffRect.xMax, baseRect.y, baseRect.xMax - diffRect.xMax, baseRect.height));
+                sprites[offset + 2] = createSpriteMeshData(TightB, new RectInt(diffRect.x, baseRect.y, diffRect.width, diffRect.y - baseRect.y));
+                sprites[offset + 3] = createSpriteMeshData(TightT, new RectInt(diffRect.x, diffRect.yMax, diffRect.width, baseRect.yMax - diffRect.yMax));
+            }
+
             t.spritesheet = sprites;
             EditorUtility.SetDirty(t);
             t.SaveAndReimport();
@@ -306,6 +247,95 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
     }
 
     private void GenerateMesh(ScenarioCharacterAssetGenerator source)
+    {
+        if(source.UseTightMesh)
+        {
+            GenerateTightMesh(source);
+        }
+        else
+        {
+            GenerateFullRectMesh(source);
+        }
+    }
+
+    private void GenerateTightMesh(ScenarioCharacterAssetGenerator source)
+    {
+        var sprites = AssetDatabase.LoadAllAssetsAtPath(source.DestinationPath).OfType<Sprite>().ToArray();
+        var baseSprite = sprites.First(x => x.name == source.BaseTexture.name);
+        var texture = baseSprite.texture;
+        var diffRectSprite = sprites.First(x => x.name == source.DiffRectSpriteName);
+        var tightLSprite = sprites.First(x => x.name == TightL);
+        var tightRSprite = sprites.First(x => x.name == TightR);
+        var tightBSprite = sprites.First(x => x.name == TightB);
+        var tightTSprite = sprites.First(x => x.name == TightT);
+        
+        //DiffRect部分のメッシュ
+        var ppu = baseSprite.pixelsPerUnit;
+        var diffRect = new Rect((diffRectSprite.textureRect.position - baseSprite.pivot) / ppu, diffRectSprite.textureRect.size / ppu);
+        var diffRectUV = diffRectSprite.UV();
+        var diffRectMesh = new Mesh();
+        diffRectMesh.vertices = new Vector3[]
+        {
+            new Vector3(diffRect.xMin, diffRect.yMin),
+            new Vector3(diffRect.xMin, diffRect.yMax),
+            new Vector3(diffRect.xMax, diffRect.yMax),
+            new Vector3(diffRect.xMax, diffRect.yMin),
+        };
+        diffRectMesh.uv = new Vector2[]
+        {
+            new Vector2(diffRectUV.xMin, diffRectUV.yMin),
+            new Vector2(diffRectUV.xMin, diffRectUV.yMax),
+            new Vector2(diffRectUV.xMax, diffRectUV.yMax),
+            new Vector2(diffRectUV.xMax, diffRectUV.yMin),
+        };
+        diffRectMesh.triangles = new int[]
+        {
+            0,1,2,
+            2,3,0,
+        };
+        var diffRectCombine = new CombineInstance
+        {
+            mesh = diffRectMesh,
+            transform = Matrix4x4.identity,
+        };
+        var tightLCombine = new CombineInstance
+        {
+            mesh = tightLSprite.ToMesh(),
+            transform = Matrix4x4.Translate((tightLSprite.textureRect.center - baseSprite.textureRect.center) / ppu),
+        };
+        var tightBCombine = new CombineInstance
+        {
+            mesh = tightBSprite.ToMesh(),
+            transform = Matrix4x4.Translate((tightBSprite.textureRect.center - baseSprite.textureRect.center) / ppu),
+        };
+        var tightTCombine = new CombineInstance
+        {
+            mesh = tightTSprite.ToMesh(),
+            transform = Matrix4x4.Translate((tightTSprite.textureRect.center - baseSprite.textureRect.center) / ppu),
+        };
+        var tightRCombine = new CombineInstance
+        {
+            mesh = tightRSprite.ToMesh(),
+            transform = Matrix4x4.Translate((tightRSprite.textureRect.center - baseSprite.textureRect.center) / ppu),
+        };
+
+        var finalMesh = new Mesh();
+        finalMesh.name = baseSprite.texture.name;
+        finalMesh.CombineMeshes(new[]
+        {
+            diffRectCombine,
+            tightLCombine,
+            tightBCombine,
+            tightTCombine,
+            tightRCombine,
+        });
+
+        var meshPath = Path.ChangeExtension(source.DestinationPath, ".asset");
+        AssetDatabase.CreateAsset(finalMesh, meshPath);
+        AssetDatabase.Refresh();
+    }
+
+    private void GenerateFullRectMesh(ScenarioCharacterAssetGenerator source)
     {
         var sprites = AssetDatabase.LoadAllAssetsAtPath(source.DestinationPath).OfType<Sprite>().ToArray();
         var baseSprite = sprites.First(x => x.name == source.BaseTexture.name);
@@ -385,18 +415,18 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
         v2 = diffRectSprite.textureRect.yMax / texture.height;
         v3 = baseSprite.textureRect.yMax / texture.height;
 
-        uvs[0]  = new Vector2(u1, v1);
-        uvs[1]  = new Vector2(u1, v2);
-        uvs[2]  = new Vector2(u2, v2);
-        uvs[3]  = new Vector2(u2, v1);
+        uvs[0] = new Vector2(u1, v1);
+        uvs[1] = new Vector2(u1, v2);
+        uvs[2] = new Vector2(u2, v2);
+        uvs[3] = new Vector2(u2, v1);
 
-        uvs[4]  = new Vector2(u0, v0);
-        uvs[5]  = new Vector2(u0, v3);
-        uvs[6]  = new Vector2(u1, v3);
-        uvs[7]  = new Vector2(u1, v0);
+        uvs[4] = new Vector2(u0, v0);
+        uvs[5] = new Vector2(u0, v3);
+        uvs[6] = new Vector2(u1, v3);
+        uvs[7] = new Vector2(u1, v0);
 
-        uvs[8]  = uvs[0];
-        uvs[9]  = uvs[3];
+        uvs[8] = uvs[0];
+        uvs[9] = uvs[3];
         uvs[10] = new Vector2(u2, v0);
         uvs[11] = uvs[1];
         uvs[12] = new Vector2(u2, v3);
