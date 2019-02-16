@@ -301,22 +301,22 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
         var tightLCombine = new CombineInstance
         {
             mesh = tightLSprite.ToMesh(),
-            transform = Matrix4x4.Translate((tightLSprite.textureRect.center - baseSprite.textureRect.center) / ppu),
+            transform = Matrix4x4.Translate((tightLSprite.rect.center - baseSprite.rect.center) / ppu),
         };
         var tightBCombine = new CombineInstance
         {
             mesh = tightBSprite.ToMesh(),
-            transform = Matrix4x4.Translate((tightBSprite.textureRect.center - baseSprite.textureRect.center) / ppu),
+            transform = Matrix4x4.Translate((tightBSprite.rect.center - baseSprite.rect.center) / ppu),
         };
         var tightTCombine = new CombineInstance
         {
             mesh = tightTSprite.ToMesh(),
-            transform = Matrix4x4.Translate((tightTSprite.textureRect.center - baseSprite.textureRect.center) / ppu),
+            transform = Matrix4x4.Translate((tightTSprite.rect.center - baseSprite.rect.center) / ppu),
         };
         var tightRCombine = new CombineInstance
         {
             mesh = tightRSprite.ToMesh(),
-            transform = Matrix4x4.Translate((tightRSprite.textureRect.center - baseSprite.textureRect.center) / ppu),
+            transform = Matrix4x4.Translate((tightRSprite.rect.center - baseSprite.rect.center) / ppu),
         };
 
         var finalMesh = new Mesh();
@@ -343,9 +343,8 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
         var diffRectSprite = sprites.First(x => x.name == source.DiffRectSpriteName);
 
         var ppu = baseSprite.pixelsPerUnit;
-        var offset = baseSprite.textureRect.position - baseSprite.pivot;
-        var diffOffset = diffRectSprite.textureRect.position - baseSprite.pivot;
-        Debug.Log($"diffRect  textureRect:{diffRectSprite.textureRect}, textureRectOffset:{diffRectSprite.textureRectOffset} pos:{diffRectSprite.textureRect.position}");
+        var offset = baseSprite.rect.position - baseSprite.pivot;
+        var diffOffset = diffRectSprite.rect.position - baseSprite.pivot;
 
         // 頂点のレイアウト
         //
@@ -369,12 +368,12 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
         float x0, x1, x2, x3, y0, y1, y2, y3;
         x0 = offset.x / ppu;
         x1 = diffOffset.x / ppu;
-        x2 = (diffOffset.x + diffRectSprite.textureRect.width) / ppu;
-        x3 = (offset.x + baseSprite.textureRect.width) / ppu;
+        x2 = (diffOffset.x + diffRectSprite.rect.width) / ppu;
+        x3 = (offset.x + baseSprite.rect.width) / ppu;
         y0 = offset.y / ppu;
         y1 = diffOffset.y / ppu;
-        y2 = (diffOffset.y + diffRectSprite.textureRect.height) / ppu;
-        y3 = (offset.y + baseSprite.textureRect.height) / ppu;
+        y2 = (diffOffset.y + diffRectSprite.rect.height) / ppu;
+        y3 = (offset.y + baseSprite.rect.height) / ppu;
 
         Debug.Log($"offset:{offset}, diffOffset:{diffOffset} | {x0}, {x1}, {x2}, {x3} | {y0}, {y1}, {y2}, {y3}");
 
@@ -406,14 +405,14 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
         //
         var uvs = new Vector2[16];
         float u0, u1, u2, u3, v0, v1, v2, v3;
-        u0 = baseSprite.textureRect.xMin / texture.width;
-        u1 = diffRectSprite.textureRect.xMin / texture.width;
-        u2 = diffRectSprite.textureRect.xMax / texture.width;
-        u3 = baseSprite.textureRect.xMax / texture.width;
-        v0 = baseSprite.textureRect.yMin / texture.height;
-        v1 = diffRectSprite.textureRect.yMin / texture.height;
-        v2 = diffRectSprite.textureRect.yMax / texture.height;
-        v3 = baseSprite.textureRect.yMax / texture.height;
+        u0 = baseSprite.rect.xMin / texture.width;
+        u1 = diffRectSprite.rect.xMin / texture.width;
+        u2 = diffRectSprite.rect.xMax / texture.width;
+        u3 = baseSprite.rect.xMax / texture.width;
+        v0 = baseSprite.rect.yMin / texture.height;
+        v1 = diffRectSprite.rect.yMin / texture.height;
+        v2 = diffRectSprite.rect.yMax / texture.height;
+        v3 = baseSprite.rect.yMax / texture.height;
 
         uvs[0] = new Vector2(u1, v1);
         uvs[1] = new Vector2(u1, v2);
