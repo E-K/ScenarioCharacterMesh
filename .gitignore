@@ -1,0 +1,16 @@
+/Assets/*
+/Library
+/Logs
+/Packages
+/ProjectSettings
+/Temp
+/Tools
+/.vs
+/obj
+
+!/Assets/Runtime
+!/Assets/Editor
+
+*.sln
+*.meta
+*.csproj
