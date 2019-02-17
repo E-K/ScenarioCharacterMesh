@@ -268,18 +268,18 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
         var tightRSprite = sprites.First(x => x.name == TightR);
         var tightBSprite = sprites.First(x => x.name == TightB);
         var tightTSprite = sprites.First(x => x.name == TightT);
-        
+
         //DiffRect部分のメッシュ
         var ppu = baseSprite.pixelsPerUnit;
-        var diffRect = new Rect((diffRectSprite.textureRect.position - baseSprite.pivot) / ppu, diffRectSprite.textureRect.size / ppu);
+        var vrect = diffRectSprite.ToPivotRect();
         var diffRectUV = diffRectSprite.UV();
         var diffRectMesh = new Mesh();
         diffRectMesh.vertices = new Vector3[]
         {
-            new Vector3(diffRect.xMin, diffRect.yMin),
-            new Vector3(diffRect.xMin, diffRect.yMax),
-            new Vector3(diffRect.xMax, diffRect.yMax),
-            new Vector3(diffRect.xMax, diffRect.yMin),
+            new Vector3(vrect.xMin / ppu, vrect.yMin / ppu),
+            new Vector3(vrect.xMin / ppu, vrect.yMax / ppu),
+            new Vector3(vrect.xMax / ppu, vrect.yMax / ppu),
+            new Vector3(vrect.xMax / ppu, vrect.yMin / ppu),
         };
         diffRectMesh.uv = new Vector2[]
         {
@@ -293,30 +293,36 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
             0,1,2,
             2,3,0,
         };
+
+        Matrix4x4 Translate(Sprite s, Sprite b)
+        {
+            return Matrix4x4.Translate(((s.rect.position + s.pivot) - (b.rect.position + b.pivot)) / b.pixelsPerUnit);
+        };
+
         var diffRectCombine = new CombineInstance
         {
             mesh = diffRectMesh,
-            transform = Matrix4x4.identity,
+            transform = Translate(diffRectSprite, baseSprite),
         };
         var tightLCombine = new CombineInstance
         {
             mesh = tightLSprite.ToMesh(),
-            transform = Matrix4x4.Translate((tightLSprite.rect.center - baseSprite.rect.center) / ppu),
+            transform = Translate(tightLSprite, baseSprite),
         };
         var tightBCombine = new CombineInstance
         {
             mesh = tightBSprite.ToMesh(),
-            transform = Matrix4x4.Translate((tightBSprite.rect.center - baseSprite.rect.center) / ppu),
+            transform = Translate(tightBSprite, baseSprite),
         };
         var tightTCombine = new CombineInstance
         {
             mesh = tightTSprite.ToMesh(),
-            transform = Matrix4x4.Translate((tightTSprite.rect.center - baseSprite.rect.center) / ppu),
+            transform = Translate(tightTSprite, baseSprite),
         };
         var tightRCombine = new CombineInstance
         {
             mesh = tightRSprite.ToMesh(),
-            transform = Matrix4x4.Translate((tightRSprite.rect.center - baseSprite.rect.center) / ppu),
+            transform = Translate(tightRSprite, baseSprite),
         };
 
         var finalMesh = new Mesh();

@@ -44,6 +44,7 @@ public class ScenarioCharacterMesh : MonoBehaviour
         }
     }
     private bool _colorChanged = true;
+    private bool _textureChanged = true;
 
     private MaterialPropertyBlock _block = null;
 
@@ -69,11 +70,16 @@ public class ScenarioCharacterMesh : MonoBehaviour
         if(_block == null)
         {
             _block = new MaterialPropertyBlock();
+        }
+
+        if(_textureChanged)
+        {
+            _textureChanged = true;
             _block.SetTexture("_MainTex", _sprites[0].texture);
             this.MeshRenderer.SetPropertyBlock(_block);
         }
 
-        if(_colorChanged)
+        if (_colorChanged)
         {
             _colorChanged = false;
             _block.SetColor("_Color", _color);
@@ -115,6 +121,7 @@ public class ScenarioCharacterMesh : MonoBehaviour
     {
         _spriteIndexchanged = true;
         _colorChanged = true;
+        _textureChanged = true;
     }
 #endif
 }
