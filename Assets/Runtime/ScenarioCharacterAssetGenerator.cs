@@ -18,5 +18,8 @@ public class ScenarioCharacterAssetGenerator : ScriptableObject
     public RectInt DiffRect;
     public RectInt DiffRectAdjustedByBlockSize;
 
+    public SpriteAlignment SpriteAlignment;
+    public Vector2 CustomPivot = new Vector2(0.5f, 0.5f);
+
     public string DestinationPath;
 }

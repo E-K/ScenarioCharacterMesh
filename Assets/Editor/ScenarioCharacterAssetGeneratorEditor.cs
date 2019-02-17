@@ -217,8 +217,8 @@ public class ScenarioCharacterAssetGeneratorEditor : Editor
                     name = name,
                     border = Vector4.zero, //9sliceのborder
                     rect = new Rect(rect.x, rect.y, rect.width, rect.height),
-                    alignment = (int)SpriteAlignment.Center,
-                    pivot = new Vector2(0.5f, 0.5f),
+                    alignment = (int)source.SpriteAlignment,
+                    pivot = source.CustomPivot,
                 };
             };
 
